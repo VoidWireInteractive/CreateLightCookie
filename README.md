@@ -32,7 +32,8 @@ Landing page for [Create Light Cookie](https://assetstore.unity.com/packages/slu
      ```
 2. **Open the Tool**
    - In Unity, go to:  
-     **Tools → Void Wire Interactive → Lighting → Batch Generate Light Cookies**
+     - For Geometry Based: **Tools → Void Wire Interactive → Lighting → Auto Light Cookie → Generate From Geometry**
+     - For Procedurally Based: **Tools → Void Wire Interactive → Lighting → Auto Light Cookie → Generate Procedural**
 
 3. **Select Lights**
    - In the Hierarchy, select one or more **Point** or **Spot** lights.
@@ -79,18 +80,20 @@ These cookies enhance lighting contrast, volume definition, and shadow realism w
 The EditorWindow provides the main interface for generating, previewing, and managing cookies.
 
 #### Menu Path
-Tools → Void Wire Interactive → Lighting → Batch Generate Light Cookies
+Tools → Void Wire Interactive → Lighting → Generate From Geometry
 
 #### Supported Light Types
 - **Point Light:** EXR Cubemap Cookie generated via Reflection Probe.
 - **Spot Light:** PNG 2D Cookie generated via temporary Camera capture.
 
----
+--- 
+</b>
 
-## Usage Guide
+# Geometry Based Generator Usage Guide
 
 ### Step 1. Open the Generator
-- Access the generator via **Tools → Void Wire Interactive → Lighting → Batch Generate Light Cookies**.
+- Access the generator via **Tools → Void Wire Interactive → Lighting → Generate From Geometry**.
+- ![alt text](https://github.com/VoidWireInteractive/CreateLightCookie/blob/main/GeometryInterface.png "StartingInterface")
 
 ### Step 2. Select Lights
 - Select one or more **Point** or **Spot** lights from the Hierarchy.
@@ -104,7 +107,7 @@ Tools → Void Wire Interactive → Lighting → Batch Generate Light Cookies
 | **Save Path** | Folder path for generated EXR cookies. |
 | **Override Exposure** | Enables advanced preview controls. |
 | **Auto Update Preview** | Automatically updates the preview in real-time. |
-| **Use Ranges** | Enables black and white value control. |
+| **Use Ranges** | Enables black and white value control for specific sets of pixels between or within chosen black/white ranges. |
 | **Darkness/Lightness Multipliers** | Adjust intensity and brightness levels. |
 | **Contrast** | Controls preview and saved contrast intensity. |
 
@@ -117,6 +120,29 @@ Tools → Void Wire Interactive → Lighting → Batch Generate Light Cookies
 | **Auto Update Preview** | Updates preview dynamically as sliders change. |
 | **Use Ranges** | Enables range-based value clamping and scaling. |
 
+
+### Override Functionality
+#### Non Range adjustments
+![alt text](https://github.com/VoidWireInteractive/CreateLightCookie/blob/main/GeoNonRange.png "Override Settings Non Ranged")
+ - **Midpont Threshold:** Determining factor for what is considered light and dark. Anything less than this value is considered darkness where as above is lightness.
+ - **Darkness Multiplier:** Multiplies the darkness value of a pixel below the set threshold
+ - **Lightness Multiplier:** Multiplies the lightness value of a pixel above the set threshold
+ - **Contrast:** Light/Dark Emphasis
+---
+#### Ranged adjustments
+![alt text](https://github.com/VoidWireInteractive/CreateLightCookie/blob/main/GeoRange.png "Override Settings Ranged")
+ - **Darkness Multiplier:** Multiplies the darkness value of a pixel below the set threshold
+ - **Lightness Multiplier:** Multiplies the lightness value of a pixel above the set threshold
+ - **Contrast:** Light/Dark Emphasis
+ - **Ranges Behavior:**
+    - **Between Is Multiplied:** Any pixel that falls within the selected ranges is multiplied by the allocated light/dark multipliers. The outliers are left unmodified 
+    - **Outside Is Multiplied:** The inverse of the between is multiplied option. Pixels that fall outside the ranges are multiplied whereas the pixels within are left unmodified.
+    - **Clamp Outliers To Ranges:** Clamp pixel values, that fall outside the selected ranges, to the highest or lowest bound of the nearest range available.
+ - **MidRanges Behavior:**
+    - **None**: Nothing is altered
+    - **Lerp to Closest:** Interpolates to the closest range bound. ex: if darknessRange.upperBound = '0.3' & lightnessRange.lowerBound = '0.9' and the pixelValue = '0.4'. the midPoint of the bounds is '0.6'. The resulting pixel value will be '0.333~'
+    - **Clamp to Closest:** The pixel value will be forced to whichever bound is closest between darknessRange.upperBound & lightnessRange.lowerBound.
+    - **Apply Multipliers:** The pixel value will simply be multiplied by the darkness/lightness multiplier values
 ---
 
 ### Step 4. Generate Cookies
@@ -142,6 +168,13 @@ You can drag the upper bar to resize the preview area.
 
 ### Step 6. Apply Last Generated
 If a light already has previously generated data, use **Apply Last Generated** to re-apply or update the existing cookie without baking again.
+
+---
+## Button Assignments
+- **Generate and Assign Cookies**: [Destructive] Saves or Overwrites the current allocated texture for the light cookie. This is destructive if a cookie already exists under the same name. 
+- **Apply Last Generated**: If a set of values for the currently selected object can be found, they can be reloaded from their most recent generation.
+- **Apply Changes To Preview**: If the `Auto Update Preview` is `false`, this applies the current settings to the preview window texture.
+- **Rever To Default**: Resets the values of the window to default.
 
 ---
 
@@ -189,6 +222,63 @@ If a light already has previously generated data, use **Apply Last Generated** t
 | Generated Textures Show albedo details of light blocking objects | Render shadows only on nearby meshes not set correctly | Delete the generations and attempt to generate again |
 
 ---
+
+--- 
+</b>
+
+# Procedurally Based Generator Usage Guide
+
+### Step 1. Open the Generator
+- Access the generator via **Tools → Void Wire Interactive → Lighting → Generate Procedural**.
+- ![alt text](https://github.com/VoidWireInteractive/CreateLightCookie/blob/main/ProcGenInterface.png "StartingInterface")
+
+### Step 2. Select Light
+- Select one **Spot** light from the Hierarchy.
+
+### Step 3. Configure Settings
+---
+#### Presets
+ - These presets will be allocated via `Scriptable object` if you so choose to create one using the **Is New Preset** options. The data used will persist as a scriptable object `Assets/VoidWireInteractive/AutoLightCookie/Presets/2d Large Spotlight Cookie.asset`
+
+#### Pattern Types
+| Pattern | Properties |
+|-------------|-------------|
+| Radial | `Falloff`  |
+| Lens | `Lens Radius`, `Ring Frequency`, `Distortion Strength`, `Falloff`, `High Noise Scale`, `Low Noise Scale`, `Blend Bias` |
+| Perlin Noise | `Noise Scale` |
+| Caustics | `Noise Scale`, `Intensity`, `Time`, `Time Offset X`, `Time Offset Y`, `Ripples`, `Undulations`, `Vertical Distortion` |
+| Grid | `Vertical Lines`, `Horizontal Lines` |
+| Slits | `Slit Width`, `Slit Count` |
+| Random Mask | `Mask Density` |
+
+#### Property Definitions
+   - **Falloff**: Controls the rate at which the radial pattern fades from center to edge. Effectively controls how fast the brightness fades from center to edge.
+   - **Lens Radius**: Controls the radius of the lens effect in the procedural pattern.
+   - **Ring Frequency**: Determines the frequency of the rings in the radial pattern.
+   - **Distortion Strength**: Adjusts the strength of the distortion applied to the procedural pattern. 
+   - **High Noise Scale**: Adjusts the scale of the secondary high-frequency noise pattern.
+   - **Low Noise Scale**: Adjusts the scale of the primary low-frequency noise pattern.
+   - **Blend Bias**: Adjusts the bias of the blending between the two noise patterns.
+   - **Noise Scale**: Adjusts the scale of the Perlin noise pattern.
+   - **Intensity**: Adjusts the intensity of the caustic noise pattern.
+   - **Time**: Adjusts the simulated time of the caustics pattern.
+   - **Time Offset X**: Slightly offsets the x-direction wave animation from the base
+   - **Time Offset Y**: Slightly slows or speeds the vertical/time component of wave
+   - **Ripples**: Controls fine vs coarse ripples
+   - **Undulations**: Introduces gentle broad undulations on top of fine ripples. Essentially would be like big slow waves.
+   - **Vertical Distortion**: Breaks symmetry between x and y, adds complexity to pattern
+   - **Vertical Lines**: Determines the number of lines in the grid pattern.
+   - **Horizontal Lines**: Determines the number of lines in the grid pattern.
+   - **Slit Width**: Controls the width of the slits in the pattern.
+   - **Slit Count**: Controls the number of slits in the pattern.
+   - **Mask Density**: Adjusts the density of the random mask pattern.
+---
+
+## Button Assignments
+- **Save Current As New Preset**: Creates a new preset under `Assets/VoidWireInteractive/AutoLightCookie/Presets/[name].asset` for the current allocated values.
+- **Generate Light Cookies**: [Destructive] Saves or Overwrites the current allocated texture for the light cookie. This is destructive if a cookie already exists under the same name.
+- **Set Default Values**: Resets the values of the window to default.
+- **Load Previous Values**: If a set of values for the currently selected object can be found, they can be reloaded from their most recent generation.
 
 ## License and Support
 
